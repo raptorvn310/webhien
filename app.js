@@ -23,6 +23,7 @@ const TEN_WEB = "Lớp học cô Hiền";     // tên hiện trên web
 const TEN_CO  = "Cô Hiền";             // lời chào, nút đăng nhập
 /* ====================================================================== */
 
+window.__appChay = true;
 const CHUA_CAU_HINH = firebaseConfig.apiKey.startsWith("DAN_");
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
@@ -56,18 +57,7 @@ const mauAv = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charC
 const avatar = ten => `<div class="av" style="background:${mauAv(ten)}">${esc(tenRieng(ten).charAt(0).toUpperCase())}</div>`;
 const empty = (icon, tieuDe, loi) => `<div class="empty"><span class="big">${icon}</span><b>${tieuDe}</b>${loi ? `<p>${loi}</p>` : ""}</div>`;
 
-const MEO = `<svg class="meo" viewBox="0 0 120 110" aria-hidden="true">
-<path d="M20 50 L25 10 L52 33 Z" fill="#fff" stroke="#6b5a70" stroke-width="3.5" stroke-linejoin="round"/>
-<path d="M100 50 L95 10 L68 33 Z" fill="#fff" stroke="#6b5a70" stroke-width="3.5" stroke-linejoin="round"/>
-<path d="M29 39 L30 22 L43 32 Z" fill="#ffc2d4"/><path d="M91 39 L90 22 L77 32 Z" fill="#ffc2d4"/>
-<ellipse cx="60" cy="66" rx="46" ry="38" fill="#fff" stroke="#6b5a70" stroke-width="3.5"/>
-<circle cx="42" cy="63" r="5.2" fill="#6b5a70"/><circle cx="78" cy="63" r="5.2" fill="#6b5a70"/>
-<circle cx="43.8" cy="61.2" r="1.7" fill="#fff"/><circle cx="79.8" cy="61.2" r="1.7" fill="#fff"/>
-<ellipse cx="29" cy="77" rx="8" ry="5" fill="#ffb3c8" opacity=".85"/><ellipse cx="91" cy="77" rx="8" ry="5" fill="#ffb3c8" opacity=".85"/>
-<circle cx="60" cy="71" r="2.8" fill="#ff8fab"/>
-<path d="M53 75 Q56.5 80 60 75 Q63.5 80 67 75" fill="none" stroke="#6b5a70" stroke-width="3" stroke-linecap="round"/>
-<path d="M98 22 c-9-6-11-13-6-16 c3-2 6 0 6 3 c0-3 3-5 6-3 c5 3 3 10-6 16z" fill="#ff8fab"/>
-</svg>`;
+const MEO = `<img class="meo" src="co-giao.png" alt="" draggable="false">`;
 
 /* ------------------------- Modal & thông báo ------------------------- */
 function moModal(tieuDe, body, { rong = false, foot = "" } = {}) {
@@ -161,7 +151,8 @@ const S = {
   nhChon: "", tab: "hs", lopChon: "",
   hsSua: false, hsNhap: [], hsTick: new Set(),
   dLop: "", dThang: "", baiMo: "", bdSua: false,
-  htLop: "", htHs: ""
+  htLop: "", htHs: "",
+  dd: [], ddLop: "", ddNgay: "", ddThang: "", ddXem: "buoi", ddNhap: {}, ddGhiChu: "", ddDoi: false
 };
 const A = {};
 window.A = A;
@@ -174,12 +165,13 @@ const baiCuaLop = id => S.bai.filter(b => b.lopId === id).sort((a, b) => String(
 const diemCua = (b, hsId) => b.diem?.[hsId] || {};
 
 async function taiDuLieu() {
-  const ten = ["namHoc", "lop", "hocSinh", "baiKiemTra", "bangDiemTheoSdt", "congKhaiDiem"];
+  const ten = ["namHoc", "lop", "hocSinh", "baiKiemTra", "bangDiemTheoSdt", "congKhaiDiem", "diemDanh"];
   const snaps = await Promise.all(ten.map(n => getDocs(collection(db, n))));
   const m = s => s.docs.map(x => ({ id: x.id, ...x.data() }));
   [S.namHoc, S.lop, S.hs, S.bai] = snaps.slice(0, 4).map(m);
   S.sdtCu = new Set(snaps[4].docs.map(x => x.id));
   S.ckCu = new Set(snaps[5].docs.map(x => x.id));
+  S.dd = m(snaps[6]);
   S.namHoc.sort((a, b) => soSanhSo(b.ten, a.ten));
   if (!S.namHoc.find(n => n.id === S.nhChon)) S.nhChon = S.namHoc[0]?.id || "";
 }
@@ -196,8 +188,9 @@ async function dongBoPhuHuynh() {
       .sort((a, b) => String(a.thang).localeCompare(String(b.thang)) || ms(a.taoLuc) - ms(b.taoLuc))
       .map(b => ({ thang: b.thang, tenBai: b.ten, diem: diemCua(b, h.id).d || "", nhanXet: diemCua(b, h.id).nx || "" }))
       .filter(x => x.diem || x.nhanXet);
+    const diemDanh = S.dd.filter(x => x.lopId === l.id && x.tt?.[h.id]).sort((a, b) => a.ngay.localeCompare(b.ngay)).map(x => ({ ngay: x.ngay, tt: x.tt[h.id] }));
     if (!theoSdt.has(sdt)) theoSdt.set(sdt, []);
-    theoSdt.get(sdt).push({ hoTen: h.hoTen, tenLop: tenLopDay(l), baiKiemTra: ds });
+    theoSdt.get(sdt).push({ hoTen: h.hoTen, tenLop: tenLopDay(l), baiKiemTra: ds, diemDanh });
   }
   for (const [sdt, hocSinh] of theoSdt) ops.push(b => b.set(doc(db, "bangDiemTheoSdt", sdt), { hocSinh, capNhat: serverTimestamp() }));
   for (const sdt of S.sdtCu) if (!theoSdt.has(sdt)) ops.push(b => b.delete(doc(db, "bangDiemTheoSdt", sdt)));
@@ -238,8 +231,17 @@ onAuthStateChanged(auth, async u => {
   if (u) {
     if (S.view === "co") return;
     S.view = "loading"; render();
-    try { await taiDuLieu(); } catch (e) { toast(loiDep(e), "err"); }
-    S.view = "co"; render();
+    try {
+      await Promise.race([taiDuLieu(), new Promise((_, loi) => setTimeout(() => loi(Object.assign(new Error("het-gio"), { code: "het-gio" })), 15000))]);
+      S.view = "co"; render();
+    } catch (e) {
+      console.error(e);
+      S.view = "co"; render();
+      const quyen = String(e?.code).includes("permission-denied");
+      window.__hienLoi?.(quyen ? "Không có quyền đọc dữ liệu" : "Không tải được dữ liệu từ Firebase",
+        quyen ? "Email đang đăng nhập (<b>" + esc(u.email) + "</b>) chưa khớp với email trong <b>Firestore → Rules</b>. Sửa dòng email trong rules cho đúng rồi bấm <b>Publish</b>, sau đó tải lại trang."
+          : "Kiểm tra trong Firebase: đã bấm <b>Firestore Database → Create database</b> chưa, và đã dán + <b>Publish</b> Rules chưa. Xong rồi tải lại trang (Ctrl+F5).<br><small>Mã lỗi: " + esc(e?.code || e?.message || e) + "</small>");
+    }
   } else if (["loading0", "loading", "co"].includes(S.view)) { S.view = "home"; render(); }
 });
 
@@ -253,7 +255,7 @@ function vHome() {
       <h2>Xin chào! 👋</h2><p>Chọn đúng vai của mình để vào nha.</p>
       <div class="home-cards">
         <button class="hcard" onclick="A.di('coLogin')"><span class="hi"><i class="fa fa-graduation-cap"></i></span><div><b>${esc(TEN_CO)}</b><small>Đăng nhập quản lý lớp, nhập điểm</small></div><i class="fa fa-angle-right"></i></button>
-        <button class="hcard" onclick="A.di('ph')"><span class="hi"><i class="fa fa-heart"></i></span><div><b>Phụ huynh</b><small>Xem điểm & nhận xét của con</small></div><i class="fa fa-angle-right"></i></button>
+        <button class="hcard" onclick="A.di('ph')"><span class="hi"><i class="fa fa-heart"></i></span><div><b>Phụ huynh</b><small>Xem điểm, nhận xét & chuyên cần của con</small></div><i class="fa fa-angle-right"></i></button>
       </div></div></div>`;
 }
 const khungAuth = (tieuDe, inner, coVe = true) => `<div class="auth-wrap"><div class="auth">
@@ -273,7 +275,7 @@ A.coDangNhap = async () => {
 A.dangXuat = async () => { await signOut(auth); S.view = "home"; render(); };
 
 /* ============================ KHUNG CÔ GIÁO ============================ */
-const TABS = [["hs", "fa-users", "Học sinh & Lớp"], ["diem", "fa-pencil-square-o", "Điểm kiểm tra"], ["ht", "fa-line-chart", "Học tập từng em"]];
+const TABS = [["hs", "fa-users", "Học sinh & Lớp"], ["dd", "fa-check-square-o", "Điểm danh"], ["diem", "fa-pencil-square-o", "Điểm kiểm tra"], ["ht", "fa-line-chart", "Học tập từng em"]];
 function vCo() {
   const nhSel = `<select class="nh-sel" onchange="A.chonNamHoc(this.value)" title="Năm học">
       ${S.namHoc.length ? S.namHoc.map(n => `<option value="${n.id}" ${n.id === S.nhChon ? "selected" : ""}>${esc(n.ten)}</option>`).join("") : `<option>Chưa có năm học</option>`}</select>`;
@@ -298,16 +300,19 @@ function vTab() {
     <div style="text-align:center"><button class="btn" onclick="A.formNamHoc()">＋ Tạo năm học</button></div></section>`;
   if (S.tab === "hs") return vTabHS();
   if (S.tab === "diem") return vTabDiem();
+  if (S.tab === "dd") return vTabDD();
   return vTabHT();
 }
 const veTab = () => { if ($("#tabMain")) $("#tabMain").innerHTML = vTab(); };
 A.tab = async t => {
+  if (S.ddDoi && t !== "dd" && !await hoi("Điểm danh buổi này chưa lưu. Bỏ các thay đổi chưa lưu nha?", "Bỏ thay đổi", true)) return;
+  if (t !== "dd") S.ddDoi = false;
   if (S.hsSua && t !== "hs" && !await hoi("Bảng học sinh đang mở để nhập mà chưa lưu. Bỏ các thay đổi chưa lưu nha?", "Bỏ thay đổi", true)) return;
   if (S.bdSua && t !== "diem" && !await hoi("Bảng điểm đang mở để nhập mà chưa lưu. Bỏ các thay đổi chưa lưu nha?", "Bỏ thay đổi", true)) return;
   S.hsSua = false; S.bdSua = false;
   S.tab = t; render(); window.scrollTo(0, 0);
 };
-A.chonNamHoc = id => { S.nhChon = id; S.lopChon = S.dLop = S.htLop = ""; S.baiMo = ""; S.hsSua = S.bdSua = false; render(); };
+A.chonNamHoc = id => { S.nhChon = id; S.lopChon = S.dLop = S.htLop = S.ddLop = ""; S.ddDoi = false; S.baiMo = ""; S.hsSua = S.bdSua = false; render(); };
 A.taiLai = thu(async () => { await taiDuLieu(); S.hsSua = S.bdSua = false; render(); toast("Đã cập nhật dữ liệu mới nhất ✨"); });
 
 A.formNamHoc = () => {
@@ -444,9 +449,10 @@ A.luuLop = thu(async id => {
   if (id) luuRoiDongBo();
 });
 A.xoaLop = thu(async id => {
-  const hs = S.hs.filter(h => h.lopId === id), bai = S.bai.filter(b => b.lopId === id);
+  const hs = S.hs.filter(h => h.lopId === id), bai = S.bai.filter(b => b.lopId === id), dds = S.dd.filter(x => x.lopId === id);
   if (!await hoi(`Xóa lớp <b>${esc(tenLop(id))}</b>${hs.length || bai.length ? ` cùng <b>${hs.length}</b> học sinh và <b>${bai.length}</b> bài kiểm tra của lớp` : ""} nha? Không khôi phục lại được đâu.`, "Xóa lớp", true)) return;
-  await chayBatch([b => b.delete(doc(db, "lop", id)), ...hs.map(h => b => b.delete(doc(db, "hocSinh", h.id))), ...bai.map(x => b => b.delete(doc(db, "baiKiemTra", x.id)))]);
+  await chayBatch([b => b.delete(doc(db, "lop", id)), ...hs.map(h => b => b.delete(doc(db, "hocSinh", h.id))), ...bai.map(x => b => b.delete(doc(db, "baiKiemTra", x.id))), ...dds.map(x => b => b.delete(doc(db, "diemDanh", x.id)))]);
+  S.dd = S.dd.filter(x => x.lopId !== id);
   S.lop = S.lop.filter(l => l.id !== id); S.hs = S.hs.filter(h => h.lopId !== id); S.bai = S.bai.filter(b => b.lopId !== id);
   toast("Đã xóa lớp"); veTab(); luuRoiDongBo();
 });
@@ -656,6 +662,135 @@ A.xuatBaoCao = () => {
 A.copyBai = id => copyChu(`${linkGoc()}?bai=${id}`, "🔗 Link xem điểm bài này");
 A.copyCong = () => copyChu(`${linkGoc()}?phuhuynh=1`, "📋 Link cổng phụ huynh");
 
+/* ============================ TAB: ĐIỂM DANH ============================ */
+const TT = {
+  c: { ten: "Có mặt", ngan: "Có mặt", kh: "✓", cls: "tt-c" },
+  m: { ten: "Đi muộn", ngan: "Muộn", kh: "M", cls: "tt-m" },
+  p: { ten: "Vắng có phép", ngan: "Phép", kh: "P", cls: "tt-p" },
+  k: { ten: "Vắng không phép", ngan: "K.phép", kh: "K", cls: "tt-k" }
+};
+const ngayNay = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const THU = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+const thuCua = n => { const [y, m, d] = n.split("-").map(Number); return THU[new Date(y, m - 1, d).getDay()]; };
+const ngayVN = n => { if (!n) return ""; const [y, m, d] = n.split("-"); return `${d}/${m}/${y}`; };
+const ngayNgan = n => { if (!n) return ""; const [, m, d] = n.split("-"); return `${d}/${m}`; };
+const ddCuaLop = id => S.dd.filter(x => x.lopId === id).sort((a, b) => a.ngay.localeCompare(b.ngay));
+const ddBuoi = () => S.dd.find(x => x.lopId === S.ddLop && x.ngay === S.ddNgay);
+const ttO = k => k ? `<span class="tt ${TT[k].cls}" title="${TT[k].ten}">${TT[k].kh}</span>` : `<span class="tt tt-n">—</span>`;
+function demTT(arr) { const c = { c: 0, m: 0, p: 0, k: 0 }; arr.forEach(k => { if (c[k] !== undefined) c[k]++; }); return c; }
+function ddNap() { // nạp bảng đang chấm từ dữ liệu đã lưu (buổi mới: mặc định tất cả có mặt)
+  const b = ddBuoi(), hs = hsCuaLop(S.ddLop);
+  S.ddNhap = {}; hs.forEach(h => { S.ddNhap[h.id] = b?.tt?.[h.id] || (b ? "" : "c"); });
+  S.ddGhiChu = b?.ghiChu || ""; S.ddDoi = false;
+}
+function vTabDD() {
+  const ds = lopCuaNam();
+  if (!S.ddNgay) S.ddNgay = ngayNay();
+  if (!S.ddThang) S.ddThang = S.ddNgay.slice(0, 7);
+  if (!ds.find(l => l.id === S.ddLop)) { S.ddLop = S.lopChon && ds.find(l => l.id === S.lopChon) ? S.lopChon : ds[0]?.id || ""; ddNap(); }
+  const head = `<div class="panel-h"><h2><i class="fa fa-check-square-o"></i>Điểm danh</h2></div>`;
+  if (!ds.length) return `<section class="panel">${head}${empty("🐣", "Năm học này chưa có lớp nào", "Tạo lớp ở tab Học sinh & Lớp trước nha.")}</section>`;
+  return `<section class="panel">${head}
+    <div class="sel-line">
+      <label>Lớp<select onchange="A.ddChon('ddLop',this.value)">${ds.map(l => `<option value="${l.id}" ${l.id === S.ddLop ? "selected" : ""}>${esc(l.ten)}</option>`).join("")}</select></label>
+      <div class="seg">${[["buoi", "fa-check", "Điểm danh buổi học"], ["thang", "fa-table", "Tổng hợp tháng"]].map(([k, ic, t]) => `<button class="${S.ddXem === k ? "on" : ""}" onclick="A.ddChon('ddXem','${k}')"><i class="fa ${ic}"></i> ${t}</button>`).join("")}</div>
+    </div>
+    ${S.ddXem === "buoi" ? vDDBuoi() : vDDThang()}</section>`;
+}
+function vDDBuoi() {
+  const hs = hsCuaLop(S.ddLop), b = ddBuoi();
+  const ganDay = ddCuaLop(S.ddLop).slice(-8).reverse();
+  const c = demTT(Object.values(S.ddNhap));
+  const chua = hs.filter(h => !S.ddNhap[h.id]).length;
+  return `<div class="dd-ngay">
+      <button class="ic" title="Ngày trước" onclick="A.ddLui(-1)"><i class="fa fa-chevron-left"></i></button>
+      <label style="margin:0">Ngày học<input type="date" value="${S.ddNgay}" onchange="A.ddChon('ddNgay',this.value)" style="margin-top:4px"></label>
+      <button class="ic" title="Ngày sau" onclick="A.ddLui(1)"><i class="fa fa-chevron-right"></i></button>
+      <span class="dd-thu">${thuCua(S.ddNgay)}, ${ngayVN(S.ddNgay)}</span>
+      ${S.ddNgay !== ngayNay() ? `<button class="btn sm ghost" onclick="A.ddChon('ddNgay','${ngayNay()}')">Hôm nay</button>` : ""}
+      <span class="badge ${b ? "mo" : "peach"}">${b ? (S.ddDoi ? "✏️ Đã sửa, chưa lưu" : "✔ Đã điểm danh") : "🆕 Buổi mới — chưa lưu"}</span>
+    </div>
+    ${ganDay.length ? `<div class="dd-gan"><small class="muted">Buổi gần đây:</small>${ganDay.map(x => { const n = demTT(Object.values(x.tt || {})); return `<button class="chip ${x.ngay === S.ddNgay ? "on" : ""}" onclick="A.ddChon('ddNgay','${x.ngay}')">${thuCua(x.ngay)} ${ngayNgan(x.ngay)}${n.p + n.k ? ` <span class="cnt">vắng ${n.p + n.k}</span>` : ""}</button>`; }).join("")}</div>` : ""}
+    ${hs.length ? `
+    <div class="dd-dem">${Object.entries(TT).map(([k, t]) => `<span class="${t.cls}-nen"><b>${c[k]}</b> ${t.ten.toLowerCase()}</span>`).join("")}${chua ? `<span class="tt-n-nen"><b>${chua}</b> chưa chấm</span>` : ""}</div>
+    <div class="toolbar">
+      <button class="btn" onclick="A.ddLuu()">💾 Lưu điểm danh</button>
+      <button class="btn ghost" onclick="A.ddTatCa()">✓ Tất cả có mặt</button>
+      ${b ? `<button class="btn ghost danger" onclick="A.ddXoa()">🗑️ Xóa buổi này</button>` : ""}
+    </div>
+    <label>Nội dung buổi học <small class="muted">(không bắt buộc)</small><input id="ddGhiChu" value="${esc(S.ddGhiChu)}" placeholder="VD: Ôn tập chương 2, kiểm tra 15 phút" oninput="A.ddGC(this.value)"></label>
+    <div class="dd-list">${hs.map((h, i) => `<div class="dd-row ${S.ddNhap[h.id] ? "r-" + S.ddNhap[h.id] : ""}">
+        <span class="dd-stt">${i + 1}</span><b class="dd-ten">${esc(h.hoTen)}</b>
+        <span class="dd-btns">${Object.entries(TT).map(([k, t]) => `<button class="${t.cls} ${S.ddNhap[h.id] === k ? "on" : ""}" onclick="A.ddDat('${h.id}','${k}')">${t.ngan}</button>`).join("")}</span></div>`).join("")}</div>
+    <p class="hint" style="margin-top:10px">💡 Buổi mới mặc định tất cả <b>có mặt</b> — chỉ cần bấm vào các em vắng / đi muộn rồi <b>Lưu</b>. Phụ huynh xem được chuyên cần của con trong cổng phụ huynh.</p>`
+    : empty("🌱", "Lớp chưa có học sinh")}`;
+}
+function vDDThang() {
+  const hs = hsCuaLop(S.ddLop);
+  const buoi = ddCuaLop(S.ddLop).filter(x => x.thang === S.ddThang || x.ngay.startsWith(S.ddThang));
+  const top = `<div class="sel-line"><label>Tháng<input type="month" value="${S.ddThang}" onchange="A.ddChon('ddThang',this.value)"></label>
+    ${buoi.length && hs.length ? `<button class="btn sky" onclick="A.ddXuat()">📤 Xuất Excel tháng này</button>` : ""}</div>`;
+  if (!hs.length) return top + empty("🌱", "Lớp chưa có học sinh");
+  if (!buoi.length) return top + empty("🗓️", `Chưa có buổi điểm danh nào trong ${tenThang(S.ddThang).toLowerCase()}`, "Qua mục “Điểm danh buổi học” để chấm nha.");
+  const rows = hs.map(h => ({ h, o: buoi.map(x => x.tt?.[h.id] || ""), c: demTT(buoi.map(x => x.tt?.[h.id])) }));
+  S._ddThang = { rows, buoi };
+  return top + `<p class="hint">${buoi.length} buổi học · Bấm vào ngày ở đầu cột để mở lại buổi đó. Ký hiệu: ${Object.values(TT).map(t => `<span class="tt ${t.cls}">${t.kh}</span> ${t.ten.toLowerCase()}`).join(" · ")}</p>
+    <div class="tbl-wrap"><table class="tbl dd-tbl"><tr><th>#</th><th>Họ tên</th>
+      ${buoi.map(x => `<th class="c"><a href="#" onclick="A.ddMoBuoi('${x.ngay}');return false" title="${esc(x.ghiChu || "")}">${thuCua(x.ngay)}<br>${ngayNgan(x.ngay)}</a></th>`).join("")}
+      <th class="c">Có mặt</th><th class="c">Muộn</th><th class="c">Phép</th><th class="c">K.phép</th></tr>
+      ${rows.map((r, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap"><b>${esc(r.h.hoTen)}</b></td>${r.o.map(k => `<td class="c">${ttO(k)}</td>`).join("")}
+        <td class="c"><b>${r.c.c + r.c.m}/${buoi.length}</b></td><td class="c">${r.c.m || ""}</td><td class="c">${r.c.p || ""}</td><td class="c ${r.c.k ? "do" : ""}">${r.c.k || ""}</td></tr>`).join("")}
+    </table></div>`;
+}
+A.ddChon = async (k, v) => {
+  if (!v && k !== "ddXem") return;
+  if (S.ddDoi && (k === "ddLop" || k === "ddNgay") && !await hoi("Điểm danh buổi này chưa lưu. Bỏ các thay đổi chưa lưu nha?", "Bỏ thay đổi", true)) { veTab(); return; }
+  S[k] = v;
+  if (k === "ddNgay") S.ddThang = v.slice(0, 7);
+  if (k === "ddLop" || k === "ddNgay" || (k === "ddXem" && v === "buoi" && !S.ddDoi)) ddNap();
+  veTab();
+};
+A.ddLui = n => { const [y, m, d] = S.ddNgay.split("-").map(Number); const x = new Date(y, m - 1, d + n); A.ddChon("ddNgay", `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`); };
+A.ddMoBuoi = ngay => { S.ddXem = "buoi"; A.ddChon("ddNgay", ngay); window.scrollTo(0, 0); };
+A.ddDat = (hsId, k) => { S.ddNhap[hsId] = k; S.ddDoi = true; const y = window.scrollY; veTab(); window.scrollTo(0, y); };
+A.ddTatCa = () => { hsCuaLop(S.ddLop).forEach(h => { S.ddNhap[h.id] = "c"; }); S.ddDoi = true; veTab(); };
+A.ddGC = v => { S.ddGhiChu = v; S.ddDoi = true; };
+A.ddLuu = thu(async () => {
+  const tt = {}; Object.entries(S.ddNhap).forEach(([id, k]) => { if (k) tt[id] = k; });
+  if (!Object.keys(tt).length) return toast("Chưa chấm em nào nè", "err");
+  const id = `${S.ddLop}_${S.ddNgay}`;
+  const data = { lopId: S.ddLop, ngay: S.ddNgay, thang: S.ddNgay.slice(0, 7), ghiChu: S.ddGhiChu.trim(), tt };
+  await chayBatch([b => b.set(doc(db, "diemDanh", id), { ...data, capNhat: serverTimestamp() })]);
+  S.dd = S.dd.filter(x => x.id !== id); S.dd.push({ id, ...data });
+  S.ddDoi = false; veTab();
+  const c = demTT(Object.values(tt));
+  toast(`Đã lưu điểm danh ${ngayNgan(S.ddNgay)} 💖 — ${c.c + c.m} có mặt, ${c.p + c.k} vắng`);
+  luuRoiDongBo();
+});
+A.ddXoa = thu(async () => {
+  const b = ddBuoi(); if (!b) return;
+  if (!await hoi(`Xóa điểm danh buổi <b>${thuCua(b.ngay)}, ${ngayVN(b.ngay)}</b> nha?`, "Xóa", true)) return;
+  await chayBatch([x => x.delete(doc(db, "diemDanh", b.id))]);
+  S.dd = S.dd.filter(x => x.id !== b.id); ddNap(); veTab(); toast("Đã xóa buổi điểm danh"); luuRoiDongBo();
+});
+A.ddXuat = () => {
+  const { rows, buoi } = S._ddThang;
+  const aoa = [[`ĐIỂM DANH ${tenThang(S.ddThang).toUpperCase()} — LỚP ${tenLop(S.ddLop)}`], [],
+    ["STT", "Họ và tên", ...buoi.map(x => `${thuCua(x.ngay)} ${ngayNgan(x.ngay)}`), "Có mặt", "Đi muộn", "Vắng có phép", "Vắng không phép"]];
+  rows.forEach((r, i) => aoa.push([i + 1, r.h.hoTen, ...r.o.map(k => k ? TT[k].kh : ""), r.c.c + r.c.m, r.c.m, r.c.p, r.c.k]));
+  aoa.push([], ["Ký hiệu: ✓ có mặt · M đi muộn · P vắng có phép · K vắng không phép"]);
+  xuatExcel(`Diem danh ${tenLop(S.ddLop)} - ${tenThang(S.ddThang)}.xlsx`, aoa, [5, 26, ...buoi.map(() => 8), 8, 8, 10, 12]);
+};
+/* Thẻ chuyên cần (dùng cho Học tập từng em + cổng phụ huynh). dd: [{ngay, tt}] */
+function htmlChuyenCan(dd) {
+  if (!dd?.length) return "";
+  const c = demTT(dd.map(x => x.tt));
+  const vang = dd.filter(x => x.tt !== "c").reverse();
+  return `<div class="card"><h3>🗓️ Chuyên cần</h3>
+    <div class="dd-dem"><span class="tt-c-nen"><b>${c.c + c.m}/${dd.length}</b> buổi có mặt</span>${c.m ? `<span class="tt-m-nen"><b>${c.m}</b> đi muộn</span>` : ""}${c.p ? `<span class="tt-p-nen"><b>${c.p}</b> vắng có phép</span>` : ""}${c.k ? `<span class="tt-k-nen"><b>${c.k}</b> vắng không phép</span>` : ""}</div>
+    ${vang.length ? `<div class="dd-vang">${vang.map(x => `<span>${ttO(x.tt)} ${thuCua(x.ngay)}, ${ngayVN(x.ngay)}</span>`).join("")}</div>` : `<p class="muted" style="margin-top:6px">Đi học đầy đủ, đúng giờ tất cả các buổi 🌟</p>`}</div>`;
+}
+
 /* ============================ TAB 3: HỌC TẬP TỪNG EM ============================ */
 function bieuDo(ds) { // [{nhan, gt}]
   const p = ds.filter(x => x.gt !== null);
@@ -674,13 +809,14 @@ function bieuDo(ds) { // [{nhan, gt}]
     ${grid}${p.length > 1 ? `<path d="${vung}" fill="url(#gr)"/><path d="${duong}" fill="none" stroke="#ff8fab" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>` : ""}${cham}</svg></div>`;
 }
 /* ds: [{thang, tenBai, diem, nhanXet}] theo thứ tự thời gian tăng dần */
-function htmlHocTap(ds) {
+function htmlHocTap(ds, dd = []) {
   const so = ds.map(x => docSo(x.diem)).filter(v => v !== null);
   const coNx = [...ds].reverse().find(x => x.nhanXet);
   return `<div class="stats">
       <div class="stat"><b>${ds.filter(x => x.diem).length}</b><small>bài có điểm</small></div>
       <div class="stat mint"><b>${so.length ? fmtSo(so.reduce((a, c) => a + c, 0) / so.length) : "—"}</b><small>điểm trung bình</small></div>
       <div class="stat sky"><b>${so.length ? fmtSo(Math.max(...so)) : "—"}</b><small>cao nhất</small></div></div>
+    ${htmlChuyenCan(dd)}
     <div class="card"><h3>📈 Điểm qua các bài</h3>${bieuDo(ds.map(x => ({ nhan: thangNgan(x.thang), ten: x.tenBai, gt: docSo(x.diem) })))}</div>
     ${coNx ? `<div class="card loi-co"><h3>💌 Nhận xét gần nhất của cô</h3><p>${esc(coNx.nhanXet)}</p><small class="muted">${esc(coNx.tenBai)} · ${tenThang(coNx.thang)}</small></div>` : ""}
     <div class="card"><h3>📝 Tất cả bài kiểm tra</h3>${ds.length ? [...ds].reverse().map(x => `<div class="thang-item"><div class="dot">${badge(x.diem)}</div>
@@ -701,7 +837,8 @@ function vTabHT() {
     body = `<div class="hello flat">${avatar(h.hoTen)}<div><b>${esc(h.hoTen)}</b>
       <small class="muted">${h.lopGhiChu ? `🏫 Lớp ${esc(h.lopGhiChu)} · ` : ""}📞 ${esc(h.sdtPH || "—")}${h.hocBatDau ? ` · 🗓️ Học từ ${esc(h.hocBatDau)}` : ""}</small></div>
       <button class="btn sm ghost" onclick="A.htChon('')">👀 Cả lớp</button></div>
-      ${htmlHocTap(bais.map(b => ({ thang: b.thang, tenBai: b.ten, diem: diemCua(b, h.id).d || "", nhanXet: diemCua(b, h.id).nx || "" })))}`;
+      ${htmlHocTap(bais.map(b => ({ thang: b.thang, tenBai: b.ten, diem: diemCua(b, h.id).d || "", nhanXet: diemCua(b, h.id).nx || "" })),
+        ddCuaLop(S.htLop).filter(x => x.tt?.[h.id]).map(x => ({ ngay: x.ngay, tt: x.tt[h.id] })))}`;
   }
   return `<section class="panel"><div class="panel-h"><h2><i class="fa fa-line-chart"></i>Học tập từng em</h2></div>
     <div class="sel-line">
@@ -710,33 +847,34 @@ function vTabHT() {
     ${body}</section>`;
 }
 function vCaLop(hs, bais) {
-  if (!bais.length) return empty("🌼", "Lớp chưa có bài kiểm tra nào");
+  if (!bais.length && !ddCuaLop(S.htLop).length) return empty("🌼", "Lớp chưa có bài kiểm tra hay buổi điểm danh nào");
   const rows = hs.map(h => {
     const ds = bais.map(b => diemCua(b, h.id));
     const so = ds.map(d => docSo(d.d)).filter(v => v !== null);
     const nx = [...ds].reverse().find(d => d.nx)?.nx || "";
-    return { h, ds, tb: so.length ? so.reduce((a, c) => a + c, 0) / so.length : null, soBai: ds.filter(d => d.d).length, nx };
+    const v = demTT(ddCuaLop(S.htLop).map(x => x.tt?.[h.id]));
+    return { h, ds, tb: so.length ? so.reduce((a, c) => a + c, 0) / so.length : null, soBai: ds.filter(d => d.d).length, nx, vang: v.p + v.k };
   });
   S._caLop = { rows, bais };
   return `<div class="toolbar"><button class="btn sky" onclick="A.xuatCaLop()">📤 Xuất Excel tổng hợp</button></div>
-    <div class="tbl-wrap"><table class="tbl"><tr><th>#</th><th>Họ tên</th>${bais.map(b => `<th class="c" title="${esc(b.ten)}">${thangNgan(b.thang)}<br><small>${esc(b.ten.length > 14 ? b.ten.slice(0, 13) + "…" : b.ten)}</small></th>`).join("")}<th class="c">TB</th><th>Nhận xét gần nhất</th></tr>
+    <div class="tbl-wrap"><table class="tbl"><tr><th>#</th><th>Họ tên</th>${bais.map(b => `<th class="c" title="${esc(b.ten)}">${thangNgan(b.thang)}<br><small>${esc(b.ten.length > 14 ? b.ten.slice(0, 13) + "…" : b.ten)}</small></th>`).join("")}<th class="c">TB</th><th class="c">Buổi vắng</th><th>Nhận xét gần nhất</th></tr>
     ${rows.map((r, i) => `<tr><td>${i + 1}</td><td style="white-space:nowrap"><a href="#" onclick="A.htChon('${r.h.id}');return false" class="ten-link">${esc(r.h.hoTen)}</a></td>
-      ${r.ds.map(d => `<td class="c">${badge(d.d)}</td>`).join("")}<td class="c"><b>${fmtSo(r.tb)}</b></td><td class="nx">${esc(r.nx)}</td></tr>`).join("")}
+      ${r.ds.map(d => `<td class="c">${badge(d.d)}</td>`).join("")}<td class="c"><b>${fmtSo(r.tb)}</b></td><td class="c ${r.vang ? "do" : ""}">${r.vang || ""}</td><td class="nx">${esc(r.nx)}</td></tr>`).join("")}
     </table></div>`;
 }
 A.htLopChon = v => { S.htLop = v; S.htHs = ""; veTab(); };
 A.htChon = v => { S.htHs = v; veTab(); window.scrollTo(0, 0); };
 A.xuatCaLop = () => {
   const { rows, bais } = S._caLop;
-  const aoa = [["STT", "Họ và tên", ...bais.map(b => `${b.ten} (${tenThang(b.thang)})`), "Điểm TB", "Nhận xét gần nhất"]];
-  rows.forEach((r, i) => aoa.push([i + 1, r.h.hoTen, ...r.ds.map(d => d.d || ""), r.tb === null ? "" : lamTron(r.tb), r.nx]));
+  const aoa = [["STT", "Họ và tên", ...bais.map(b => `${b.ten} (${tenThang(b.thang)})`), "Điểm TB", "Buổi vắng", "Nhận xét gần nhất"]];
+  rows.forEach((r, i) => aoa.push([i + 1, r.h.hoTen, ...r.ds.map(d => d.d || ""), r.tb === null ? "" : lamTron(r.tb), r.vang, r.nx]));
   xuatExcel(`Tong hop diem ${tenLop(S.htLop)}.xlsx`, aoa, [5, 26]);
 };
 
 /* ============================ CỔNG PHỤ HUYNH ============================ */
 function vPH() {
   return `<div class="hs-wrap" style="max-width:820px">
-    <div class="hello">${MEO.replace('class="meo"', 'class="meo" style="width:56px;animation:none"')}<div><b>💌 Góc phụ huynh</b><small class="muted">Nhập số điện thoại đã đăng ký với ${esc(TEN_CO.toLowerCase())} để xem điểm + nhận xét của con</small></div>
+    <div class="hello">${MEO.replace('class="meo"', 'class="meo" style="width:56px;animation:none"')}<div><b>💌 Góc phụ huynh</b><small class="muted">Nhập số điện thoại đã đăng ký với ${esc(TEN_CO.toLowerCase())} để xem điểm, nhận xét và chuyên cần của con</small></div>
       ${thamSo.get("phuhuynh") ? "" : `<button class="btn ghost sm" onclick="A.di('home')">← Về</button>`}</div>
     <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
       <label style="flex:1;min-width:200px;margin:0">Số điện thoại phụ huynh<input id="sdtPH" type="tel" inputmode="numeric" placeholder="09xx xxx xxx" onkeydown="if(event.key==='Enter')A.traCuu()"></label>
@@ -751,7 +889,7 @@ A.traCuu = thu(async () => {
   const ds = s.exists() ? (s.data().hocSinh || []) : [];
   if (!ds.length) { $("#phKQ").innerHTML = empty("🔎", "Chưa có dữ liệu với số điện thoại này", "Phụ huynh kiểm tra lại số, hoặc liên hệ cô giáo nha."); return; }
   $("#phKQ").innerHTML = ds.map(h => `<div class="hello" style="margin-top:18px">${avatar(h.hoTen)}<div><b>${esc(h.hoTen)}</b>
-    <small class="muted">🏫 Lớp học thêm: ${esc(h.tenLop || "—")}</small></div></div>${htmlHocTap(h.baiKiemTra || [])}`).join("");
+    <small class="muted">🏫 Lớp học thêm: ${esc(h.tenLop || "—")}</small></div></div>${htmlHocTap(h.baiKiemTra || [], h.diemDanh || [])}`).join("");
 });
 if (thamSo.get("phuhuynh") && !BAI_LINK) S.view = "ph";
 
