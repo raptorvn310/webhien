@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lớp học cô Hiền</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌷</text></svg>">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="co-giao.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Open+Sans+Condensed:wght@300;700&display=swap" rel="stylesheet">
@@ -16,6 +17,40 @@
 <div id="app"><div class="loading"><div class="bounce">🌷</div><p>Đang mở lớp học...</p></div></div>
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
+<script>
+/* Tự báo lỗi nếu web không khởi động được (thay vì xoay mãi) */
+(function () {
+  function hien(tieuDe, chiTiet) {
+    if (window.__appChay && !chiTiet) return;
+    var box = document.getElementById("loiKhoiDong");
+    if (!box) {
+      box = document.createElement("div"); box.id = "loiKhoiDong";
+      box.style.cssText = "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:560px;width:92%;background:#fff;border-top:4px solid #F05C72;box-shadow:0 10px 40px rgba(0,0,0,.25);border-radius:8px;padding:20px 22px;font:14px/1.6 'Open Sans',sans-serif;color:#353535;z-index:999";
+      document.body.appendChild(box);
+    }
+    box.innerHTML = "<b style='font-size:16px;color:#d2425a'>⚠️ " + tieuDe + "</b>" + (chiTiet ? "<div style='margin-top:8px'>" + chiTiet + "</div>" : "");
+  }
+  window.__hienLoi = hien;
+  if (location.protocol === "file:") {
+    document.addEventListener("DOMContentLoaded", function () {
+      hien("Đang mở web bằng cách bấm đúp file",
+        "Trình duyệt không cho chạy web kiểu này. Hãy mở bằng link GitHub Pages (https://...github.io/...), hoặc chạy thử trên máy: mở terminal trong thư mục web, gõ <code>python -m http.server</code> rồi vào <b>http://localhost:8000</b>.");
+    });
+    return;
+  }
+  window.addEventListener("error", function (e) {
+    if (e.target && e.target.tagName === "SCRIPT") hien("Không tải được app.js hoặc thư viện Firebase", "Kiểm tra: (1) đã tải đủ 3 file <b>index.html, style.css, app.js</b> lên cùng một thư mục, đúng tên chữ thường; (2) mạng ổn định — thử tải lại trang bằng Ctrl+F5.");
+    else if (e.message) hien("Web gặp lỗi khi chạy", "<code>" + e.message + "</code><br>Chụp màn hình này gửi để kiểm tra nha.");
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    hien("Web gặp lỗi khi chạy", "<code>" + ((e.reason && e.reason.message) || e.reason) + "</code><br>Chụp màn hình này gửi để kiểm tra nha.");
+  });
+  setTimeout(function () {
+    if (!window.__appChay) hien("Web chưa khởi động được sau 12 giây",
+      "Thử lần lượt: (1) kiểm tra mạng rồi tải lại trang (Ctrl+F5); (2) kiểm tra đã tải đủ <b>app.js</b> lên cùng thư mục với index.html; (3) mở bằng Chrome mới nhất. Nếu vẫn bị, bấm F12 → tab Console, chụp màn hình gửi để kiểm tra.");
+  }, 12000);
+})();
+</script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
