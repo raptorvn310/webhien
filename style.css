@@ -49,13 +49,14 @@ textarea{resize:vertical}
 input[type=checkbox]{width:16px;height:16px;accent-color:var(--pink);cursor:pointer;vertical-align:middle}
 
 /* ---------- Mèo linh vật ---------- */
-.meo{width:120px;height:auto;animation:lac 3s ease-in-out infinite}
+.meo{width:120px;height:auto;aspect-ratio:1;object-fit:cover;border-radius:50%;display:inline-block;user-select:none;animation:lac 3s ease-in-out infinite}
 @keyframes lac{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-4px)}}
 @keyframes troi{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
 /* ---------- Trang chủ ---------- */
 .home{min-height:100vh;display:grid;grid-template-columns:minmax(280px,38%) 1fr}
 .home-side{background:var(--black);color:#fff;border-right:3px solid var(--pink);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px;position:relative;overflow:hidden}
+.home-side .meo{width:170px;border:5px solid var(--pink);box-shadow:0 0 0 8px rgba(240,92,114,.18)}
 .home-side h1{font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:clamp(30px,4.5vw,46px);text-transform:uppercase;color:var(--pink);letter-spacing:1px;margin-top:10px;line-height:1.1}
 .home-side p{color:#bbb;margin-top:8px}
 .home-side .deco{position:absolute;color:var(--pink);opacity:.18;font-size:60px;animation:troi 6s ease-in-out infinite}
@@ -77,7 +78,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--pink);cursor:poin
 /* ---------- Hộp đăng nhập / link xem điểm ---------- */
 .auth-wrap{min-height:100vh;display:grid;place-items:center;padding:20px;background:var(--black)}
 .auth{background:#fff;border-radius:8px;border-top:4px solid var(--pink);box-shadow:0 20px 60px rgba(0,0,0,.4);padding:30px 26px 26px;width:100%;max-width:400px;position:relative}
-.auth .meo{width:84px;display:block;margin:-74px auto 4px;background:#fff;border-radius:50%;padding:8px;border:3px solid var(--pink)}
+.auth .meo{width:96px;display:block;margin:-78px auto 6px;border:4px solid var(--pink);animation:none}
 .auth h2{text-align:center;margin-bottom:18px;font-size:19px;text-transform:uppercase;letter-spacing:.5px}
 .back{position:absolute;top:12px;left:12px}
 .kq-bai{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
@@ -88,7 +89,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--pink);cursor:poin
 #sidebar{position:fixed;left:0;top:0;width:250px;height:100%;background:var(--black);border-right:2px solid var(--pink);z-index:30;overflow-y:auto;display:flex;flex-direction:column;
   scrollbar-width:thin;scrollbar-color:var(--pink) transparent}
 #sidebar .logo{text-align:center;padding:26px 20px 18px;color:#fff}
-#sidebar .logo .meo{width:84px;animation:none}
+#sidebar .logo .meo{width:96px;animation:none;border:3px solid var(--pink)}
 #sidebar .logo b{display:block;font-family:'Open Sans Condensed','Open Sans',sans-serif;font-size:22px;color:var(--pink);text-transform:uppercase;letter-spacing:.5px;line-height:1.15;margin-top:6px}
 #sidebar .logo small{color:#999;font-size:12px}
 .side-nh{padding:0 20px 18px}
@@ -202,7 +203,7 @@ table.tbl{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff}
 .hello b{font-size:17px;display:block}
 .hello small.muted{color:#aaa}
 .hello > div:not(.av){flex:1;min-width:0}
-.hello .meo{background:#fff;border-radius:50%;padding:4px}
+.hello .meo{border:2px solid var(--pink)}
 .hello .btn.ghost{background:transparent;color:#fff;border-color:#444}
 .hello .btn.ghost:hover{border-color:var(--pink);color:var(--pink)}
 .av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:18px;color:#fff;flex:none;border:2px solid #fff}
@@ -235,12 +236,12 @@ table.tbl{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff}
 @media (max-width:860px){
   .home{grid-template-columns:1fr}
   .home-side{border-right:none;border-bottom:3px solid var(--pink);padding:30px 20px}
-  .home-side .meo{width:90px}
+  .home-side .meo{width:110px}
   .home-main{padding:24px 16px 40px}
   #sidebar{display:none}
   #content-section{padding:0 0 90px}
   .top-m{display:flex;position:sticky;top:0;z-index:30;align-items:center;gap:8px;background:var(--black);border-bottom:2px solid var(--pink);padding:8px 10px}
-  .top-m .meo{width:38px;animation:none;background:#fff;border-radius:50%;padding:3px}
+  .top-m .meo{width:38px;animation:none;border:2px solid var(--pink)}
   .top-m .nh-sel{flex:1;min-width:0;padding:6px 8px;font-size:13px}
   .top-m .ic{background:#1c1c1c;color:var(--pink)}
   .bottom-m{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--black);border-top:2px solid var(--pink);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
@@ -257,5 +258,50 @@ table.tbl{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff}
   .stat b{font-size:21px}
   .stat small{font-size:10.5px}
   #toastRoot{bottom:84px}
+}
+
+/* ---------- Điểm danh ---------- */
+.seg{display:inline-flex;border:1px solid #dcdcdc;border-radius:var(--r);overflow:hidden;align-self:end}
+.seg button{border:none;background:#fff;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.seg button + button{border-left:1px solid #dcdcdc}
+.seg button.on{background:var(--black);color:#fff;box-shadow:inset 0 -3px 0 var(--pink)}
+.dd-ngay{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.dd-ngay .ic{height:38px;width:38px}
+.dd-ngay input{width:auto}
+.dd-thu{font-weight:700;font-size:15px;align-self:center;margin:0 4px}
+.dd-ngay .badge{align-self:center}
+.dd-gan{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.dd-gan .chip{padding:3px 10px;font-size:12.5px}
+.dd-dem{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dd-dem span{padding:3px 10px;border-radius:999px;font-size:12.5px}
+.tt-c-nen{background:var(--green2);color:var(--green)} .tt-m-nen{background:var(--orange2);color:var(--orange)}
+.tt-p-nen{background:var(--blue2);color:var(--blue)} .tt-k-nen{background:var(--red2);color:var(--red)} .tt-n-nen{background:#f2f2f2;color:var(--muted)}
+.dd-list{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.dd-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--line);border-left:4px solid transparent;background:#fff}
+.dd-row:first-child{border-top:none}
+.dd-row.r-c{border-left-color:var(--green)} .dd-row.r-m{border-left-color:var(--orange);background:#fffaf3}
+.dd-row.r-p{border-left-color:var(--blue);background:#f6faff} .dd-row.r-k{border-left-color:var(--red);background:#fff6f6}
+.dd-stt{width:24px;color:var(--muted);font-size:12.5px;flex:none}
+.dd-ten{flex:1;min-width:140px}
+.dd-btns{display:flex;gap:4px}
+.dd-btns button{border:1px solid #dcdcdc;background:#fff;color:#777;border-radius:var(--r);padding:6px 10px;font-size:12.5px;font-weight:600;cursor:pointer;min-width:58px;transition:all .15s}
+.dd-btns button:hover{border-color:#999}
+.dd-btns button.tt-c.on{background:var(--green);border-color:var(--green);color:#fff}
+.dd-btns button.tt-m.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.dd-btns button.tt-p.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.dd-btns button.tt-k.on{background:var(--red);border-color:var(--red);color:#fff}
+.tt{display:inline-grid;place-items:center;min-width:24px;height:22px;border-radius:4px;font-weight:700;font-size:12.5px;padding:0 4px}
+.tt.tt-c{background:var(--green2);color:var(--green)} .tt.tt-m{background:var(--orange2);color:var(--orange)}
+.tt.tt-p{background:var(--blue2);color:var(--blue)} .tt.tt-k{background:var(--red2);color:var(--red)} .tt.tt-n{color:#ccc}
+.dd-tbl th a{color:#fff} .dd-tbl th a:hover{color:var(--pink)}
+.dd-tbl td,.dd-tbl th{padding:6px 7px}
+.tbl td.do{color:var(--red);font-weight:700}
+.dd-vang{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:13px}
+.dd-vang span{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:860px){
+  .seg{width:100%} .seg button{flex:1;padding:9px 6px}
+  .dd-row{flex-wrap:wrap;gap:6px 8px;padding:8px 10px}
+  .dd-btns{width:100%;padding-left:32px} .dd-btns button{flex:1;min-width:0;padding:8px 2px}
+  .bottom-m button{font-size:10.5px}
 }
 @media print{#sidebar,.top-m,.bottom-m{display:none}#content-section{padding:0}}
